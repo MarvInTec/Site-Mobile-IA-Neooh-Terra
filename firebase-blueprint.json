@@ -1,0 +1,22 @@
+{
+  "entities": {
+    "ChatMessage": {
+      "title": "Chat Message",
+      "description": "A message in the chat history",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "model"] },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["text", "role", "userId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/chats": {
+      "schema": "ChatMessage",
+      "description": "Global chat messages collection"
+    }
+  }
+}

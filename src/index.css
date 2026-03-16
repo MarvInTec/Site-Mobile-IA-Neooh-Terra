@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --color-neo-purple: #4a1a6b;
+  --color-neo-lilac: #5b2c7d;
+  --color-neo-pink: #e91e8c;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-black text-white font-sans antialiased;
+  }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+@keyframes rotate-globe {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-rotate-globe {
+  animation: rotate-globe 20s linear infinite;
+}
+
+.glass-morphism {
+  @apply bg-black/40 backdrop-blur-2xl border border-white/5;
+}
+
+.chat-dark-bg {
+  @apply bg-zinc-950/80 backdrop-blur-3xl border border-white/10;
+}
+
+.neo-gradient {
+  background: linear-gradient(135deg, #4a1a6b 0%, #5b2c7d 50%, #e91e8c 100%);
+}
+
+.neo-text-gradient {
+  @apply bg-clip-text text-transparent;
+  background-image: linear-gradient(135deg, #5b2c7d 0%, #e91e8c 100%);
+}
+
+.globe-3d {
+  position: relative;
+  border-radius: 50%;
+  background: url('https://img.icons8.com/color/480/earth-globe.png');
+  background-size: 110%;
+  background-position: center;
+  box-shadow: 
+    0 10px 20px rgba(0,0,0,0.4),
+    inset -4px -4px 10px rgba(0,0,0,0.5),
+    inset 4px 4px 10px rgba(255,255,255,0.4);
+  filter: drop-shadow(0 0 8px rgba(233, 30, 140, 0.4));
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
