@@ -712,31 +712,31 @@ export default function App() {
                 name: "Eduardo Oliveira",
                 role: "Desenvolvedor de IA",
                 linkedin: "https://www.linkedin.com/in/FirminoEduardo",
-                image: "https://ui-avatars.com/api/?name=Eduardo+Oliveira&background=0D8ABC&color=fff&size=256"
+                image: "/eduardo.jpeg"
               },
               {
                 name: "Fernando Galvão",
                 role: "Desenvolvedor de IA e Back-end",
                 linkedin: "https://www.linkedin.com/in/fernandocsgalvao",
-                image: "https://ui-avatars.com/api/?name=Fernando+Galvão&background=E91E63&color=fff&size=256"
+                image: "/fernando.jpeg"
               },
               {
                 name: "Marcus Simões",
                 role: "Tech Lead, Engenheiro de Software",
                 linkedin: "https://www.linkedin.com/in/marcussimoes/",
-                image: "/marcus.jpeg" // Atualize com a foto enviada
+                image: "/marcus.jpeg"
               },
               {
                 name: "Jonathan Gomes",
                 role: "Dados e Pesquisa",
                 linkedin: "https://www.linkedin.com/in/jonathan-gomes-0a7993134/",
-                image: "https://ui-avatars.com/api/?name=Jonathan+Gomes&background=FF9800&color=fff&size=256"
+                image: "/jonathan.jpeg"
               },
               {
                 name: "Rafaela Barezi",
                 role: "Dados e Pesquisa",
                 linkedin: "https://www.linkedin.com/in/rafaela-barezi/",
-                image: "/rafaela.jpg.png" // Atualize com a foto enviada
+                image: "/rafaela.jpeg"
               }
             ].map((member, i) => (
               <motion.a
