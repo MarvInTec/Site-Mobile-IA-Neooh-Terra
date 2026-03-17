@@ -15,6 +15,9 @@
   body {
     @apply bg-black text-white font-sans antialiased;
   }
+  a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
+    @apply outline-none ring-2 ring-neo-lilac ring-offset-2 transition-shadow;
+  }
 }
 
 @keyframes spin-slow {

@@ -12,7 +12,7 @@ import { auth, db, signInWithGoogle, logout, collection, addDoc, query, orderBy,
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 const GeminiIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-hidden="true">
     <path d="M12 2L14.8 9.2L22 12L14.8 14.8L12 22L9.2 14.8L2 12L9.2 9.2L12 2Z" fill="currentColor" />
   </svg>
 );
@@ -178,7 +178,7 @@ export default function App() {
         })}
       </script>
       {/* Navbar */}
-      <nav className={`fixed top-0 w-full z-50 px-4 md:px-6 py-4 flex justify-between items-center transition-all ${isDarkMode ? 'glass-morphism' : 'bg-white/80 backdrop-blur-2xl border-b border-black/5'}`}>
+      <nav aria-label="Navegação Principal" className={`fixed top-0 w-full z-50 px-4 md:px-6 py-4 flex justify-between items-center transition-all ${isDarkMode ? 'glass-morphism' : 'bg-white/80 backdrop-blur-2xl border-b border-black/5'}`}>
         <a href="#contato" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <div className="flex items-center">
             <span className={`text-xl md:text-2xl font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>NEOOH</span>
@@ -203,6 +203,7 @@ export default function App() {
             onClick={() => setIsDarkMode(!isDarkMode)}
             className={`p-2 rounded-full transition-all ${isDarkMode ? 'bg-white/10 text-yellow-400 hover:bg-white/20' : 'bg-black/5 text-gray-600 hover:bg-black/10'}`}
             title={isDarkMode ? "Modo Claro" : "Modo Escuro"}
+            aria-label={isDarkMode ? "Mudar para modo claro" : "Mudar para modo escuro"}
           >
             {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
@@ -211,7 +212,7 @@ export default function App() {
             {user ? (
               <div className="flex items-center gap-3">
                 <img src={user.photoURL || ''} alt={user.displayName || ''} className="w-8 h-8 rounded-full border border-white/20" />
-                <button onClick={logout} className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} hover:text-neo-pink transition-colors`}>
+                <button onClick={logout} className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} hover:text-neo-pink transition-colors`} aria-label="Sair da conta">
                   <LogOut className="w-5 h-5" />
                 </button>
               </div>
@@ -230,6 +231,9 @@ export default function App() {
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className={`md:hidden p-2 rounded-lg transition-colors ${isDarkMode ? 'text-white hover:bg-white/10' : 'text-black hover:bg-black/5'}`}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-menu"
+            aria-label={isMobileMenuOpen ? "Fechar menu" : "Abrir menu"}
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -239,6 +243,7 @@ export default function App() {
         <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
+              id="mobile-menu"
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
@@ -253,12 +258,12 @@ export default function App() {
                   </div>
                   <span className={`text-xl md:text-2xl font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>TERRA</span>
                 </div>
-                <button onClick={() => setIsMobileMenuOpen(false)} className={`p-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                <button onClick={() => setIsMobileMenuOpen(false)} className={`p-2 ${isDarkMode ? 'text-white' : 'text-black'}`} aria-label="Fechar menu mobile">
                   <X className="w-8 h-8" />
                 </button>
               </div>
               
-              <div className={`flex flex-col gap-8 text-2xl font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>
+              <nav aria-label="Menu Mobile" className={`flex flex-col gap-8 text-2xl font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>
                 {[
                   { label: 'Soluções', href: '#solucoes' },
                   { label: 'Tecnologia', href: '#tecnologia' },
@@ -283,7 +288,7 @@ export default function App() {
                     {link.label}
                   </motion.a>
                 ))}
-              </div>
+              </nav>
 
               <div className={`mt-auto pt-8 border-t flex flex-col gap-4 ${isDarkMode ? 'border-white/10' : 'border-black/10'}`}>
                 {user ? (
@@ -292,7 +297,7 @@ export default function App() {
                       <img src={user.photoURL || ''} alt={user.displayName || ''} className="w-10 h-10 rounded-full border border-white/20" />
                       <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{user.displayName}</span>
                     </div>
-                    <button onClick={logout} className={`p-3 rounded-full ${isDarkMode ? 'bg-white/10 text-white' : 'bg-black/5 text-black'}`}>
+                    <button onClick={logout} className={`p-3 rounded-full ${isDarkMode ? 'bg-white/10 text-white' : 'bg-black/5 text-black'}`} aria-label="Sair da conta">
                       <LogOut className="w-6 h-6" />
                     </button>
                   </div>
@@ -313,8 +318,9 @@ export default function App() {
         </AnimatePresence>
       </nav>
 
+      <main>
       {/* Hero Section */}
-      <section className={`relative h-screen flex flex-col justify-center items-center px-6 overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
+      <section id="hero" aria-label="Introdução" className={`relative h-screen flex flex-col justify-center items-center px-6 overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
         <div className="absolute inset-0 z-0">
           {/* Overlays for depth, glow and color tint */}
           <div className={`absolute inset-0 z-10 ${isDarkMode ? 'bg-gradient-to-b from-black/60 via-transparent to-black' : 'bg-gradient-to-b from-white/30 via-transparent to-white/60'}`} />
@@ -373,7 +379,7 @@ export default function App() {
       </section>
 
       {/* Stats Section (Soluções) */}
-      <section id="solucoes" className={`py-24 px-6 transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950' : 'bg-gray-100'}`}>
+      <section id="solucoes" aria-label="Soluções e Estatísticas" className={`py-24 px-6 transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950' : 'bg-gray-100'}`}>
         <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
           {[
             { label: 'Telas Digitais', value: '15.000+', icon: <BarChart3 className="w-6 h-6 text-neo-lilac" /> },
@@ -400,7 +406,7 @@ export default function App() {
       </section>
 
       {/* Features Section (Tecnologia) */}
-      <section id="tecnologia" className={`py-20 md:py-32 px-6 relative overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
+      <section id="tecnologia" aria-label="Tecnologia" className={`py-20 md:py-32 px-6 relative overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <motion.div
@@ -470,7 +476,7 @@ export default function App() {
       </section>
 
       {/* Showroom Section */}
-      <section id="showroom" className={`py-32 px-6 transition-colors duration-500 ${isDarkMode ? 'bg-black' : 'bg-gray-50'}`}>
+      <section id="showroom" aria-label="Showroom" className={`py-32 px-6 transition-colors duration-500 ${isDarkMode ? 'bg-black' : 'bg-gray-50'}`}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className={`text-5xl font-black tracking-tighter mb-4 uppercase ${isDarkMode ? 'text-white' : 'text-black'}`}>NOSSO <span className="neo-text-gradient">SHOWROOM</span></h2>
@@ -531,7 +537,7 @@ export default function App() {
       </section>
 
       {/* Cases Section */}
-      <section id="cases" className={`py-32 px-6 transition-colors duration-500 ${isDarkMode ? 'bg-zinc-900/50' : 'bg-white'}`}>
+      <section id="cases" aria-label="Cases de Sucesso" className={`py-32 px-6 transition-colors duration-500 ${isDarkMode ? 'bg-zinc-900/50' : 'bg-white'}`}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className={`text-5xl font-black tracking-tighter mb-4 uppercase ${isDarkMode ? 'text-white' : 'text-black'}`}>CASES DE <span className="neo-text-gradient">SUCESSO</span></h2>
@@ -599,7 +605,7 @@ export default function App() {
       </section>
 
       {/* Map Section (Contato) */}
-      <section id="contato" className={`py-32 px-6 transition-colors duration-500 ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
+      <section id="contato" aria-label="Onde Estamos" className={`py-32 px-6 transition-colors duration-500 ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className={`text-5xl font-black tracking-tighter mb-4 ${isDarkMode ? 'text-white' : 'text-black'}`}>ONDE ESTAMOS</h2>
@@ -649,25 +655,27 @@ export default function App() {
       </section>
 
       {/* Lead Form Section */}
-      <section id="anuncie" className={`py-20 md:py-32 px-6 transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950' : 'bg-gray-50'}`}>
+      <section id="anuncie" aria-label="Anuncie Agora" className={`py-20 md:py-32 px-6 transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950' : 'bg-gray-50'}`}>
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
             <h2 className={`text-4xl md:text-5xl font-black tracking-tighter mb-4 uppercase ${isDarkMode ? 'text-white' : 'text-black'}`}>ANUNCIE <span className="neo-text-gradient">AGORA</span></h2>
             <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Preencha os dados abaixo e nossa equipe entrará em contato.</p>
           </div>
-          <form className={`space-y-6 p-6 md:p-10 rounded-3xl border shadow-2xl transition-all ${isDarkMode ? 'bg-black/40 border-white/10' : 'bg-white border-black/5'}`} onSubmit={(e) => e.preventDefault()}>
+          <form aria-label="Formulário de Contato" className={`space-y-6 p-6 md:p-10 rounded-3xl border shadow-2xl transition-all ${isDarkMode ? 'bg-black/40 border-white/10' : 'bg-white border-black/5'}`} onSubmit={(e) => e.preventDefault()}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className={`text-xs font-bold uppercase tracking-widest ml-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Nome</label>
+                <label htmlFor="nome" className={`text-xs font-bold uppercase tracking-widest ml-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Nome</label>
                 <input 
+                  id="nome"
                   type="text" 
                   placeholder="Seu nome completo" 
                   className={`w-full border rounded-2xl px-6 py-4 focus:outline-none focus:border-neo-lilac transition-colors ${isDarkMode ? 'bg-zinc-900/50 border-white/10 text-white' : 'bg-gray-50 border-black/10 text-black'}`}
                 />
               </div>
               <div className="space-y-2">
-                <label className={`text-xs font-bold uppercase tracking-widest ml-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>E-mail</label>
+                <label htmlFor="email" className={`text-xs font-bold uppercase tracking-widest ml-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>E-mail</label>
                 <input 
+                  id="email"
                   type="email" 
                   placeholder="seu@email.com" 
                   className={`w-full border rounded-2xl px-6 py-4 focus:outline-none focus:border-neo-lilac transition-colors ${isDarkMode ? 'bg-zinc-900/50 border-white/10 text-white' : 'bg-gray-50 border-black/10 text-black'}`}
@@ -675,14 +683,15 @@ export default function App() {
               </div>
             </div>
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-widest ml-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>WhatsApp</label>
+              <label htmlFor="whatsapp" className={`text-xs font-bold uppercase tracking-widest ml-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>WhatsApp</label>
               <input 
+                id="whatsapp"
                 type="tel" 
                 placeholder="(00) 00000-0000" 
                 className={`w-full border rounded-2xl px-6 py-4 focus:outline-none focus:border-neo-lilac transition-colors ${isDarkMode ? 'bg-zinc-900/50 border-white/10 text-white' : 'bg-gray-50 border-black/10 text-black'}`}
               />
             </div>
-            <button className="w-full neo-gradient py-5 rounded-2xl font-black text-xl uppercase tracking-widest hover:opacity-90 transition-all shadow-xl text-white">
+            <button type="submit" className="w-full neo-gradient py-5 rounded-2xl font-black text-xl uppercase tracking-widest hover:opacity-90 transition-all shadow-xl text-white">
               Enviar
             </button>
           </form>
@@ -690,7 +699,7 @@ export default function App() {
       </section>
 
       {/* Sobre Nós Section (Team) */}
-      <section id="sobre-nos" className={`py-32 px-6 transition-colors duration-500 ${isDarkMode ? 'bg-black' : 'bg-gray-50'}`}>
+      <section id="sobre-nos" aria-label="Sobre Nós" className={`py-32 px-6 transition-colors duration-500 ${isDarkMode ? 'bg-black' : 'bg-gray-50'}`}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className={`text-5xl font-black tracking-tighter mb-4 uppercase ${isDarkMode ? 'text-white' : 'text-black'}`}>GRUPO <span className="neo-text-gradient">TERRA</span></h2>
@@ -774,6 +783,7 @@ export default function App() {
       </section>
 
       {/* Footer */}
+      </main>
       <motion.footer 
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
@@ -794,13 +804,13 @@ export default function App() {
               Líder em inovação e tecnologia para mídia Out of Home. Conectando pessoas e marcas através de experiências digitais únicas.
             </p>
             <div className="flex gap-4">
-              <a href="https://www.linkedin.com/company/neooh/" target="_blank" rel="noopener noreferrer" className={`w-10 h-10 rounded-full border flex items-center justify-center transition-colors cursor-pointer group ${isDarkMode ? 'bg-white/5 border-white/10 hover:bg-[#0077B5]' : 'bg-gray-100 border-black/5 hover:bg-[#0077B5]'}`}>
+              <a href="https://www.linkedin.com/company/neooh/" target="_blank" rel="noopener noreferrer" className={`w-10 h-10 rounded-full border flex items-center justify-center transition-colors cursor-pointer group ${isDarkMode ? 'bg-white/5 border-white/10 hover:bg-[#0077B5]' : 'bg-gray-100 border-black/5 hover:bg-[#0077B5]'}`} aria-label="LinkedIn da NEOOH">
                 <Linkedin className={`w-5 h-5 group-hover:text-white transition-colors ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
               </a>
-              <a href="https://www.instagram.com/neooh.phygital/" target="_blank" rel="noopener noreferrer" className={`w-10 h-10 rounded-full border flex items-center justify-center transition-colors cursor-pointer group ${isDarkMode ? 'bg-white/5 border-white/10 hover:bg-[#E4405F]' : 'bg-gray-100 border-black/5 hover:bg-[#E4405F]'}`}>
+              <a href="https://www.instagram.com/neooh.phygital/" target="_blank" rel="noopener noreferrer" className={`w-10 h-10 rounded-full border flex items-center justify-center transition-colors cursor-pointer group ${isDarkMode ? 'bg-white/5 border-white/10 hover:bg-[#E4405F]' : 'bg-gray-100 border-black/5 hover:bg-[#E4405F]'}`} aria-label="Instagram da NEOOH">
                 <Instagram className={`w-5 h-5 group-hover:text-white transition-colors ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
               </a>
-              <a href="https://www.youtube.com/@neooh.phygital" target="_blank" rel="noopener noreferrer" className={`w-10 h-10 rounded-full border flex items-center justify-center transition-colors cursor-pointer group ${isDarkMode ? 'bg-white/5 border-white/10 hover:bg-[#FF0000]' : 'bg-gray-100 border-black/5 hover:bg-[#FF0000]'}`}>
+              <a href="https://www.youtube.com/@neooh.phygital" target="_blank" rel="noopener noreferrer" className={`w-10 h-10 rounded-full border flex items-center justify-center transition-colors cursor-pointer group ${isDarkMode ? 'bg-white/5 border-white/10 hover:bg-[#FF0000]' : 'bg-gray-100 border-black/5 hover:bg-[#FF0000]'}`} aria-label="YouTube da NEOOH">
                 <Youtube className={`w-5 h-5 group-hover:text-white transition-colors ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
               </a>
               <a href="https://soulcode.com" target="_blank" rel="noopener noreferrer" className="h-10 flex items-center justify-center transition-opacity hover:opacity-80" title="SoulCode">
@@ -847,6 +857,7 @@ export default function App() {
               onClick={scrollToTop}
               className={`w-12 h-12 backdrop-blur-xl border rounded-full flex items-center justify-center shadow-xl hover:bg-neo-purple transition-all group ${isDarkMode ? 'bg-zinc-900/80 border-white/10' : 'bg-white/80 border-black/10'}`}
               title="Voltar ao topo"
+              aria-label="Voltar ao topo"
             >
               <ChevronUp className={`w-6 h-6 group-hover:scale-110 transition-transform ${isDarkMode ? 'text-white' : 'text-black'}`} />
             </motion.button>
@@ -856,6 +867,7 @@ export default function App() {
         <AnimatePresence>
           {isChatOpen && (
             <motion.div 
+              id="chat-panel"
               initial={{ opacity: 0, scale: 0.8, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 20 }}
@@ -875,13 +887,17 @@ export default function App() {
                 <button 
                   onClick={() => setIsChatOpen(false)}
                   className="p-2 hover:bg-black/20 rounded-full transition-colors text-white"
+                  aria-label="Fechar chat"
                 >
                   <X className="w-6 h-6" />
                 </button>
               </div>
 
               {/* Chat Messages */}
-              <div className={`flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide ${isDarkMode ? 'bg-black/20' : 'bg-gray-50'}`}>
+              <div 
+                className={`flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide ${isDarkMode ? 'bg-black/20' : 'bg-gray-50'}`}
+                aria-live="polite"
+              >
                 {messages.map((msg, i) => (
                   <motion.div 
                     key={i} 
@@ -937,11 +953,13 @@ export default function App() {
                     onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                     placeholder={user ? "Pergunte ao NEO..." : "Faça login primeiro"}
                     className={`flex-1 border rounded-full px-6 py-3 text-sm focus:outline-none focus:border-neo-lilac transition-colors disabled:opacity-50 ${isDarkMode ? 'bg-zinc-900/50 border-white/5 text-white placeholder:text-gray-600' : 'bg-gray-50 border-black/10 text-black placeholder:text-gray-400'}`}
+                    aria-label="Mensagem para o chat"
                   />
                   <button 
                     onClick={handleSendMessage}
                     disabled={isLoading || !user}
                     className={`w-12 h-12 neo-gradient rounded-full flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50 shadow-lg text-white ${isLoading ? 'scale-90 opacity-50' : 'active:scale-95'}`}
+                    aria-label="Enviar mensagem"
                   >
                     {isLoading ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -958,6 +976,9 @@ export default function App() {
         <button 
           onClick={() => setIsChatOpen(!isChatOpen)}
           className="w-16 h-16 neo-gradient rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform relative group"
+          aria-expanded={isChatOpen}
+          aria-controls="chat-panel"
+          aria-label={isChatOpen ? "Fechar chat" : "Abrir chat com NEO"}
         >
           <div className="absolute inset-0 rounded-full bg-neo-lilac animate-ping opacity-20 group-hover:opacity-40" />
           <GeminiIcon className="w-10 h-10 text-white relative z-10" />
