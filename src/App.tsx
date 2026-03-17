@@ -4,8 +4,9 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Globe, MessageSquare, X, Send, ChevronRight, Play, BarChart3, Zap, Users, MapPin, LogIn, LogOut, Sparkles, Menu, Linkedin, Instagram, Youtube, ChevronUp, Sun, Moon } from 'lucide-react';
+import { Globe, MessageSquare, X, Send, ChevronRight, Play, BarChart3, Zap, Users, MapPin, LogIn, LogOut, Sparkles, Menu, Linkedin, Instagram, Youtube, ChevronUp, Sun, Moon, User, Star, QrCode } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import QRCode from 'react-qr-code';
 import { getNeoResponse } from './services/geminiService';
 import { auth, db, signInWithGoogle, logout, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, where } from './firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -242,10 +243,16 @@ export default function App() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
-              className={`fixed inset-0 z-[60] flex flex-col p-8 lg:hidden transition-all ${isDarkMode ? 'bg-zinc-950/98 backdrop-blur-2xl' : 'bg-white/98 backdrop-blur-2xl'}`}
+              className={`fixed inset-0 z-[60] flex flex-col p-8 lg:hidden transition-all ${isDarkMode ? 'bg-black' : 'bg-white'}`}
             >
               <div className="flex justify-between items-center mb-12">
-                <span className={`text-2xl font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>NEOOH</span>
+                <div className="flex items-center">
+                  <span className={`text-xl md:text-2xl font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>NEOOH</span>
+                  <div className="mx-2 w-6 h-6 md:w-8 md:h-8 rounded-full bg-neo-purple flex items-center justify-center overflow-hidden border border-white/10">
+                    <GeminiIcon className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                  </div>
+                  <span className={`text-xl md:text-2xl font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>TERRA</span>
+                </div>
                 <button onClick={() => setIsMobileMenuOpen(false)} className={`p-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>
                   <X className="w-8 h-8" />
                 </button>
@@ -479,14 +486,14 @@ export default function App() {
                 icon: <Zap className="w-5 h-5" />
               },
               {
-                title: "Rodoviárias",
-                desc: "Conectando marcas a milhões de viajantes em terminais rodoviários de alta circulação.",
-                image: "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&q=80&w=800",
+                title: "Terminais Marítimos",
+                desc: "Presença estratégica nos principais portos e terminais marítimos, conectando marcas a milhões de passageiros e turistas.",
+                image: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&q=80&w=800",
                 icon: <Zap className="w-5 h-5" />
               },
               {
                 title: "Terminais Rodoviários & Urbanos",
-                desc: "Estamos presentes em mais de 50 Terminais Rodoviários e 80 Terminais Urbanos",
+                desc: "Estamos presentes em mais de 50 Terminais Rodoviários e 80 Terminais Urbanos, incluindo o Terminal Tietê em São Paulo.",
                 image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=800",
                 icon: <Zap className="w-5 h-5" />
               }
@@ -682,6 +689,90 @@ export default function App() {
         </div>
       </section>
 
+      {/* Sobre Nós Section (Team) */}
+      <section id="sobre-nos" className={`py-32 px-6 transition-colors duration-500 ${isDarkMode ? 'bg-black' : 'bg-gray-50'}`}>
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-20">
+            <h2 className={`text-5xl font-black tracking-tighter mb-4 uppercase ${isDarkMode ? 'text-white' : 'text-black'}`}>GRUPO <span className="neo-text-gradient">TERRA</span></h2>
+            <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} max-w-2xl mx-auto`}>Conheça a equipe de desenvolvedores por trás da inovação.</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+            {[
+              {
+                name: "Eduardo Oliveira",
+                role: "Desenvolvedor de IA",
+                linkedin: "https://www.linkedin.com/in/FirminoEduardo",
+                image: "https://ui-avatars.com/api/?name=Eduardo+Oliveira&background=0D8ABC&color=fff&size=256"
+              },
+              {
+                name: "Fernando Galvão",
+                role: "Desenvolvedor de IA e Back-end",
+                linkedin: "https://www.linkedin.com/in/fernandocsgalvao",
+                image: "https://ui-avatars.com/api/?name=Fernando+Galvão&background=E91E63&color=fff&size=256"
+              },
+              {
+                name: "Marcus Simões",
+                role: "Tech Lead, Engenheiro de Software",
+                linkedin: "https://www.linkedin.com/in/marcussimoes/",
+                image: "/marcus.jpeg" // Atualize com a foto enviada
+              },
+              {
+                name: "Jonathan Gomes",
+                role: "Dados e Pesquisa",
+                linkedin: "https://www.linkedin.com/in/jonathan-gomes-0a7993134/",
+                image: "https://ui-avatars.com/api/?name=Jonathan+Gomes&background=FF9800&color=fff&size=256"
+              },
+              {
+                name: "Rafaela Barezi",
+                role: "Dados e Pesquisa",
+                linkedin: "https://www.linkedin.com/in/rafaela-barezi/",
+                image: "/rafaela.jpg.png" // Atualize com a foto enviada
+              }
+            ].map((member, i) => (
+              <motion.a
+                href={member.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+                whileHover={{ y: -10, scale: 1.02 }}
+                className="neo-gradient p-8 rounded-3xl flex flex-col items-center text-center shadow-xl border border-white/10 relative group cursor-pointer"
+              >
+                <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl" />
+                <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-6 border border-white/30 shadow-inner overflow-hidden">
+                  <img src={member.image} alt={member.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">{member.name}</h3>
+                <p className="text-sm text-white/80 font-medium mb-4">{member.role}</p>
+                <div className="mt-auto flex gap-3 justify-center relative">
+                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-[#0077B5] transition-colors">
+                    <Linkedin className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                    {member.name === "Marcus Simões" ? (
+                      <Zap className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                    ) : (
+                      <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                    )}
+                  </div>
+                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors group/qr">
+                    <QrCode className="w-5 h-5 text-white" />
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 opacity-0 group-hover/qr:opacity-100 transition-opacity pointer-events-none bg-white p-2 rounded-xl shadow-2xl z-50">
+                      <QRCode value={member.linkedin} size={120} />
+                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rotate-45"></div>
+                    </div>
+                  </div>
+                </div>
+              </motion.a>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <motion.footer 
         initial={{ opacity: 0 }}
@@ -723,7 +814,7 @@ export default function App() {
           <div>
             <h4 className={`font-bold mb-6 uppercase tracking-widest text-sm ${isDarkMode ? 'text-white' : 'text-black'}`}>Empresa</h4>
             <ul className={`space-y-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>
-              <li><a href="#" className="hover:text-neo-lilac transition-colors">Sobre Nós</a></li>
+              <li><a href="#sobre-nos" className="hover:text-neo-lilac transition-colors">Sobre Nós</a></li>
               <li><a href="#roadmap" className="hover:text-neo-lilac transition-colors">Roadmap</a></li>
               <li><a href="#" className="hover:text-neo-lilac transition-colors">Carreiras</a></li>
               <li><a href="#" className="hover:text-neo-lilac transition-colors">Imprensa</a></li>
