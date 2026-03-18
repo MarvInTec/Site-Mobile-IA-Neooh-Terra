@@ -367,8 +367,8 @@ export default function App() {
             transition={{ delay: 0.6, duration: 0.5 }}
             className="flex flex-col md:flex-row gap-4 justify-center"
           >
-            <a href="#showroom" className="neo-gradient hover:opacity-90 text-white px-10 py-4 rounded-full font-bold text-lg transition-all flex items-center justify-center gap-2">
-              Conheça Nossas Telas <ChevronRight className="w-5 h-5" />
+            <a href="#sobre-nos" className="neo-gradient hover:opacity-90 text-white px-10 py-4 rounded-full font-bold text-lg transition-all flex items-center justify-center gap-2">
+              CONHEÇA A EQUIPE <ChevronRight className="w-5 h-5" />
             </a>
           </motion.div>
         </motion.div>
@@ -468,7 +468,7 @@ export default function App() {
                   </div>
                   <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>NEO AI Ativo</span>
                 </div>
-                <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Otimizando campanhas em 452 telas simultaneamente.</p>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Fale com o nosso Agente NEO AI e conheça nossas soluções de DOOH e OOH.</p>
               </div>
             </motion.div>
           </div>
