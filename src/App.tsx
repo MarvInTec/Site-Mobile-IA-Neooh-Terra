@@ -468,7 +468,7 @@ export default function App() {
                   </div>
                   <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>NEO AI Ativo</span>
                 </div>
-                <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Fale com o nosso Agente NEO AI e conheça nossas soluções de DOOH e OOH.</p>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Fale com o nosso Especialista em OOH e DOOH, o NEO. Clique no ícone da estrela à sua direita e descubra novas possibilidades.</p>
               </div>
             </motion.div>
           </div>
