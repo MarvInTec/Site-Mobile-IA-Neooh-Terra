@@ -4,10 +4,11 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Globe, MessageSquare, X, Send, ChevronRight, Play, BarChart3, Zap, Users, MapPin, LogIn, LogOut, Sparkles, Menu, Linkedin, Instagram, Youtube, ChevronUp, Sun, Moon, User, Star, QrCode } from 'lucide-react';
+import { Globe, MessageSquare, Mic, X, Send, ChevronRight, Play, BarChart3, Zap, Users, MapPin, LogIn, LogOut, Sparkles, Menu, Linkedin, Instagram, Youtube, ChevronUp, Sun, Moon, User, Star, QrCode } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import QRCode from 'react-qr-code';
 import { LGPDConsent } from './components/LGPDConsent';
+import { VoiceChat } from './components/VoiceChat';
 import { getNeoResponse } from './services/geminiService';
 import { auth, db, signInWithGoogle, logout, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, where } from './firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -27,6 +28,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef(messages);
 
@@ -917,94 +919,113 @@ export default function App() {
                   </div>
                   <div>
                     <h3 className="font-black text-lg leading-none text-white">NEO</h3>
-                    <span className="text-xs text-white/70">{isLoading ? 'Processando...' : 'Powered by NEOOH - TERRA AI'}</span>
+                    <span className="text-xs text-white/70">{isVoiceMode ? 'Modo Voz Ativo' : (isLoading ? 'Processando...' : 'Powered by NEOOH - TERRA AI')}</span>
                   </div>
                 </div>
-                <button 
-                  onClick={() => setIsChatOpen(false)}
-                  className="p-2 hover:bg-black/20 rounded-full transition-colors text-white"
-                  aria-label="Fechar chat"
-                >
-                  <X className="w-6 h-6" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setIsVoiceMode(!isVoiceMode)}
+                    className={`p-2 rounded-full transition-all ${isVoiceMode ? 'bg-white/20 text-white' : 'hover:bg-black/20 text-white/70 hover:text-white'}`}
+                    title={isVoiceMode ? "Mudar para texto" : "Mudar para voz"}
+                  >
+                    {isVoiceMode ? <MessageSquare className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                  </button>
+                  <button 
+                    onClick={() => setIsChatOpen(false)}
+                    className="p-2 hover:bg-black/20 rounded-full transition-colors text-white"
+                    aria-label="Fechar chat"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
               </div>
 
-              {/* Chat Messages */}
+              {/* Chat Messages or Voice Interface */}
               <div 
                 className={`flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide ${isDarkMode ? 'bg-black/20' : 'bg-gray-50'}`}
                 aria-live="polite"
               >
-                {messages.map((msg) => (
-                  <motion.div 
-                    key={msg.id} 
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div className={`max-w-[80%] p-4 rounded-2xl text-sm shadow-sm ${
-                      msg.role === 'user' 
-                        ? 'bg-neo-purple text-white rounded-tr-none' 
-                        : (isDarkMode ? 'bg-zinc-900/80 text-gray-200 rounded-tl-none border border-white/5' : 'bg-white text-gray-800 rounded-tl-none border border-black/5')
-                    }`}>
-                      {msg.text}
-                    </div>
-                  </motion.div>
-                ))}
-                {isLoading && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex justify-start"
-                  >
-                    <div className="flex flex-col gap-1">
-                      <div className={`p-4 rounded-2xl rounded-tl-none border flex gap-1.5 items-center ${isDarkMode ? 'bg-zinc-900/80 border-white/5' : 'bg-white border-black/5'}`}>
-                        <div className="w-2 h-2 bg-neo-lilac rounded-full animate-bounce [animation-duration:0.8s]" />
-                        <div className="w-2 h-2 bg-neo-pink rounded-full animate-bounce [animation-duration:0.8s] [animation-delay:0.2s]" />
-                        <div className="w-2 h-2 bg-neo-purple rounded-full animate-bounce [animation-duration:0.8s] [animation-delay:0.4s]" />
-                      </div>
-                      <span className="text-[10px] text-neo-lilac font-bold uppercase tracking-widest ml-1 animate-pulse">NEO está pensando...</span>
-                    </div>
-                  </motion.div>
+                {isVoiceMode ? (
+                  <div className="h-full flex items-center justify-center">
+                    <VoiceChat isDarkMode={isDarkMode} user={user} />
+                  </div>
+                ) : (
+                  <>
+                    {messages.map((msg) => (
+                      <motion.div 
+                        key={msg.id} 
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
+                        className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className={`max-w-[80%] p-4 rounded-2xl text-sm shadow-sm ${
+                          msg.role === 'user' 
+                            ? 'bg-neo-purple text-white rounded-tr-none' 
+                            : (isDarkMode ? 'bg-zinc-900/80 text-gray-200 rounded-tl-none border border-white/5' : 'bg-white text-gray-800 rounded-tl-none border border-black/5')
+                        }`}>
+                          {msg.text}
+                        </div>
+                      </motion.div>
+                    ))}
+                    {isLoading && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex justify-start"
+                      >
+                        <div className="flex flex-col gap-1">
+                          <div className={`p-4 rounded-2xl rounded-tl-none border flex gap-1.5 items-center ${isDarkMode ? 'bg-zinc-900/80 border-white/5' : 'bg-white border-black/5'}`}>
+                            <div className="w-2 h-2 bg-neo-lilac rounded-full animate-bounce [animation-duration:0.8s]" />
+                            <div className="w-2 h-2 bg-neo-pink rounded-full animate-bounce [animation-duration:0.8s] [animation-delay:0.2s]" />
+                            <div className="w-2 h-2 bg-neo-purple rounded-full animate-bounce [animation-duration:0.8s] [animation-delay:0.4s]" />
+                          </div>
+                          <span className="text-[10px] text-neo-lilac font-bold uppercase tracking-widest ml-1 animate-pulse">NEO está pensando...</span>
+                        </div>
+                      </motion.div>
+                    )}
+                    <div ref={chatEndRef} />
+                  </>
                 )}
-                <div ref={chatEndRef} />
               </div>
 
-              {/* Chat Input */}
-              <div className={`p-4 border-t flex flex-col gap-2 ${isDarkMode ? 'border-white/5 bg-black/40' : 'border-black/5 bg-white'}`}>
-                {!user && (
-                  <button 
-                    onClick={signInWithGoogle}
-                    className={`w-full py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all mb-2 ${isDarkMode ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-black'}`}
-                  >
-                    Faça login para conversar
-                  </button>
-                )}
-                <div className="flex gap-2">
-                  <input 
-                    type="text" 
-                    value={input}
-                    disabled={!user}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                    placeholder={user ? "Pergunte ao NEO..." : "Faça login primeiro"}
-                    className={`flex-1 border rounded-full px-6 py-3 text-sm focus:outline-none focus:border-neo-lilac transition-colors disabled:opacity-50 ${isDarkMode ? 'bg-zinc-900/50 border-white/5 text-white placeholder:text-gray-600' : 'bg-gray-50 border-black/10 text-black placeholder:text-gray-400'}`}
-                    aria-label="Mensagem para o chat"
-                  />
-                  <button 
-                    onClick={handleSendMessage}
-                    disabled={isLoading || !user}
-                    className={`w-12 h-12 neo-gradient rounded-full flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50 shadow-lg text-white ${isLoading ? 'scale-90 opacity-50' : 'active:scale-95'}`}
-                    aria-label="Enviar mensagem"
-                  >
-                    {isLoading ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <Send className="w-5 h-5" />
-                    )}
-                  </button>
+              {/* Chat Input (Hidden in Voice Mode) */}
+              {!isVoiceMode && (
+                <div className={`p-4 border-t flex flex-col gap-2 ${isDarkMode ? 'border-white/5 bg-black/40' : 'border-black/5 bg-white'}`}>
+                  {!user && (
+                    <button 
+                      onClick={signInWithGoogle}
+                      className={`w-full py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all mb-2 ${isDarkMode ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-black'}`}
+                    >
+                      Faça login para conversar
+                    </button>
+                  )}
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      value={input}
+                      disabled={!user}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                      placeholder={user ? "Pergunte ao NEO..." : "Faça login primeiro"}
+                      className={`flex-1 border rounded-full px-6 py-3 text-sm focus:outline-none focus:border-neo-lilac transition-colors disabled:opacity-50 ${isDarkMode ? 'bg-zinc-900/50 border-white/5 text-white placeholder:text-gray-600' : 'bg-gray-50 border-black/10 text-black placeholder:text-gray-400'}`}
+                      aria-label="Mensagem para o chat"
+                    />
+                    <button 
+                      onClick={handleSendMessage}
+                      disabled={isLoading || !user}
+                      className={`w-12 h-12 neo-gradient rounded-full flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50 shadow-lg text-white ${isLoading ? 'scale-90 opacity-50' : 'active:scale-95'}`}
+                      aria-label="Enviar mensagem"
+                    >
+                      {isLoading ? (
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <Send className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
