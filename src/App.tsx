@@ -7,6 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Globe, MessageSquare, X, Send, ChevronRight, Play, BarChart3, Zap, Users, MapPin, LogIn, LogOut, Sparkles, Menu, Linkedin, Instagram, Youtube, ChevronUp, Sun, Moon, User, Star, QrCode } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import QRCode from 'react-qr-code';
+import { LGPDConsent } from './components/LGPDConsent';
 import { getNeoResponse } from './services/geminiService';
 import { auth, db, signInWithGoogle, logout, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, where } from './firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -984,6 +985,7 @@ export default function App() {
           <GeminiIcon className="w-10 h-10 text-white relative z-10" />
         </button>
       </div>
+      <LGPDConsent />
     </div>
   );
 }

@@ -35,7 +35,7 @@
 }
 
 .animate-rotate-globe {
-  animation: rotate-globe 20s linear infinite;
+  animation: rotate-globe 3s linear infinite;
 }
 
 .glass-morphism {
