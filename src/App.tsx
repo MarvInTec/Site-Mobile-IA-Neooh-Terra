@@ -22,17 +22,22 @@ export default function App() {
   const [user] = useAuthState(auth);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [messages, setMessages] = useState<{ role: 'user' | 'model', text: string }[]>([]);
+  const [messages, setMessages] = useState<{ id: string, role: 'user' | 'model', text: string }[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef(messages);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   // Load chat history from Firestore
   useEffect(() => {
     if (!user) {
-      setMessages([{ role: 'model', text: 'Olá! Eu sou o NEO, seu assistente inteligente da NEOOH. Por favor, faça login para salvar seu histórico e conversar comigo!' }]);
+      setMessages([{ id: 'initial-model-msg', role: 'model', text: 'Olá! Eu sou o NEO, seu assistente inteligente da NEOOH. Por favor, faça login para salvar seu histórico e conversar comigo!' }]);
       return;
     }
 
@@ -44,15 +49,12 @@ export default function App() {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const loadedMessages = snapshot.docs.map(doc => ({
+        id: doc.id,
         role: doc.data().role as 'user' | 'model',
         text: doc.data().text as string
       }));
       
-      if (loadedMessages.length === 0) {
-        setMessages([{ role: 'model', text: `Olá ${user.displayName}! Eu sou o NEO. Como posso ajudar você hoje?` }]);
-      } else {
-        setMessages(loadedMessages);
-      }
+      setMessages(loadedMessages);
     });
 
     return () => unsubscribe();
@@ -65,6 +67,39 @@ export default function App() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Welcome message and scroll when chat opens
+  useEffect(() => {
+    if (isChatOpen && user) {
+      // Small delay to ensure the panel is rendered before scrolling
+      const timer = setTimeout(() => {
+        scrollToBottom();
+      }, 300);
+
+      // Send a welcome message to Firestore
+      const sendWelcome = async () => {
+        try {
+          const hasMessages = messagesRef.current.length > 0;
+          const welcomeText = hasMessages
+            ? `Olá novamente, ${user.displayName}! Que bom ver você de novo. Como posso te ajudar agora?`
+            : `Olá ${user.displayName}! Eu sou o NEO. Como posso ajudar você hoje?`;
+
+          await addDoc(collection(db, 'chats'), {
+            text: welcomeText,
+            role: 'model',
+            userId: user.uid,
+            createdAt: serverTimestamp()
+          });
+        } catch (error) {
+          console.error("Erro ao enviar mensagem de boas-vindas:", error);
+        }
+      };
+      
+      sendWelcome();
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isChatOpen, user]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -120,7 +155,7 @@ export default function App() {
   return (
     <div className={`min-h-screen transition-colors duration-500 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} selection:bg-neo-pink selection:text-white`}>
       {/* SEO Schema Markup */}
-      <script type="application/ld+json">
+      <script key="schema-org" type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Organization",
@@ -142,7 +177,7 @@ export default function App() {
           ]
         })}
       </script>
-      <script type="application/ld+json">
+      <script key="schema-local-business" type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",
           "@type": "LocalBusiness",
@@ -899,9 +934,9 @@ export default function App() {
                 className={`flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide ${isDarkMode ? 'bg-black/20' : 'bg-gray-50'}`}
                 aria-live="polite"
               >
-                {messages.map((msg, i) => (
+                {messages.map((msg) => (
                   <motion.div 
-                    key={i} 
+                    key={msg.id} 
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.3, ease: "easeOut" }}
