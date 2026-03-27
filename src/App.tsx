@@ -3,11 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
-import { Globe, X, ChevronRight, Play, BarChart3, Zap, Users, MapPin, LogIn, LogOut, Sparkles, Menu, Linkedin, Instagram, Youtube, ChevronUp, Sun, Moon, User, Star, QrCode, Share2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Globe, MessageSquare, X, Send, ChevronRight, Play, BarChart3, Zap, Users, MapPin, LogIn, LogOut, Sparkles, Menu, Linkedin, Instagram, Youtube, ChevronUp, Sun, Moon, User, Star, QrCode } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import QRCode from 'react-qr-code';
-import { auth, db, signInWithGoogle, logout } from './firebase';
+import { getNeoResponse } from './services/geminiService';
+import { auth, db, signInWithGoogle, logout, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, where } from './firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 const GeminiIcon = ({ className }: { className?: string }) => (
@@ -18,133 +19,51 @@ const GeminiIcon = ({ className }: { className?: string }) => (
 
 export default function App() {
   const [user] = useAuthState(auth);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [messages, setMessages] = useState<{ role: 'user' | 'model', text: string }[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [formData, setFormData] = useState({ nome: '', email: '', whatsapp: '' });
-  const [showConsent, setShowConsent] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // Load chat history from Firestore
   useEffect(() => {
-    if (user) {
-      const consent = localStorage.getItem('lgpd_location_consent');
-      if (!consent) {
-        setShowConsent(true);
-      } else if (consent === 'granted') {
-        fetchLocationData();
-      }
+    if (!user) {
+      setMessages([{ role: 'model', text: 'Olá! Eu sou o NEO, seu assistente inteligente da NEOOH. Por favor, faça login para salvar seu histórico e conversar comigo!' }]);
+      return;
     }
+
+    const q = query(
+      collection(db, 'chats'),
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'asc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const loadedMessages = snapshot.docs.map(doc => ({
+        role: doc.data().role as 'user' | 'model',
+        text: doc.data().text as string
+      }));
+      
+      if (loadedMessages.length === 0) {
+        setMessages([{ role: 'model', text: `Olá ${user.displayName}! Eu sou o NEO. Como posso ajudar você hoje?` }]);
+      } else {
+        setMessages(loadedMessages);
+      }
+    });
+
+    return () => unsubscribe();
   }, [user]);
 
-  const updateDfMessenger = (params: any) => {
-    const dfMessenger = document.querySelector('df-messenger') as any;
-    if (dfMessenger && typeof dfMessenger.setQueryParameters === 'function') {
-      dfMessenger.setQueryParameters({
-        parameters: {
-          user_location_city: params.city || '',
-          user_location_region: params.region || '',
-          user_lat: params.lat || '',
-          user_lng: params.lng || '',
-          user_ip: params.ip || ''
-        }
-      });
-    } else {
-      // Wait for it to load if not ready
-      window.addEventListener('df-messenger-loaded', () => {
-        const df = document.querySelector('df-messenger') as any;
-        if (df && typeof df.setQueryParameters === 'function') {
-          df.setQueryParameters({
-            parameters: {
-              user_location_city: params.city || '',
-              user_location_region: params.region || '',
-              user_lat: params.lat || '',
-              user_lng: params.lng || '',
-              user_ip: params.ip || ''
-            }
-          });
-        }
-      });
-    }
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const fetchLocationData = async () => {
-    let locationParams: any = {
-      city: '',
-      region: '',
-      country: '',
-      lat: '',
-      lng: '',
-      ip: ''
-    };
-
-    try {
-      const ipRes = await fetch('https://ipapi.co/json/');
-      if (ipRes.ok) {
-        const ipData = await ipRes.json();
-        locationParams = {
-          city: ipData.city || '',
-          region: ipData.region || '',
-          country: ipData.country_name || '',
-          lat: ipData.latitude || '',
-          lng: ipData.longitude || '',
-          ip: ipData.ip || ''
-        };
-      }
-    } catch (error) {
-      console.warn('Error fetching IP location, falling back to GPS:', error);
-    }
-
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          locationParams.lat = position.coords.latitude;
-          locationParams.lng = position.coords.longitude;
-          updateDfMessenger(locationParams);
-        },
-        (error) => {
-          console.warn('Geolocation error:', error);
-          updateDfMessenger(locationParams);
-        }
-      );
-    } else {
-      updateDfMessenger(locationParams);
-    }
-  };
-
-  const handleAcceptLocation = () => {
-    localStorage.setItem('lgpd_location_consent', 'granted');
-    setShowConsent(false);
-    fetchLocationData();
-  };
-
-  const handleDeclineLocation = () => {
-    localStorage.setItem('lgpd_location_consent', 'denied');
-    setShowConsent(false);
-  };
-
-  const handleShare = async (title: string, text: string) => {
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title,
-          text,
-          url: window.location.href,
-        });
-      } else {
-        await navigator.clipboard.writeText(`${title} - ${text}\n${window.location.href}`);
-        alert('Link copiado para a área de transferência!');
-      }
-    } catch (error) {
-      console.error('Erro ao compartilhar:', error);
-    }
-  };
-
-  const handleWhatsAppSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const { nome, email, whatsapp } = formData;
-    const message = `Olá! Gostaria de anunciar com a NEOOH.\n\n*Nome:* ${nome}\n*E-mail:* ${email}\n*WhatsApp:* ${whatsapp}`;
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/5511987587258?text=${encodedMessage}`, '_blank');
-  };
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -161,6 +80,40 @@ export default function App() {
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSendMessage = async () => {
+    if (!input.trim() || isLoading || !user) return;
+
+    const userMessage = input;
+    setInput('');
+    
+    // Save user message to Firestore
+    await addDoc(collection(db, 'chats'), {
+      text: userMessage,
+      role: 'user',
+      userId: user.uid,
+      createdAt: serverTimestamp()
+    });
+
+    setIsLoading(true);
+
+    const history = messages.map(m => ({
+      role: m.role,
+      parts: [{ text: m.text }]
+    }));
+
+    const response = await getNeoResponse(userMessage, history);
+    
+    // Save model response to Firestore
+    await addDoc(collection(db, 'chats'), {
+      text: response,
+      role: 'model',
+      userId: user.uid,
+      createdAt: serverTimestamp()
+    });
+
+    setIsLoading(false);
   };
 
   return (
@@ -224,51 +177,6 @@ export default function App() {
           }
         })}
       </script>
-      {/* LGPD Consent Modal */}
-      <AnimatePresence>
-        {showConsent && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className={`w-full max-w-md p-6 rounded-3xl shadow-2xl border ${isDarkMode ? 'bg-zinc-900 border-white/10 text-white' : 'bg-white border-black/10 text-black'}`}
-            >
-              <div className="flex items-start gap-4 mb-4">
-                <div className="w-10 h-10 rounded-full bg-neo-purple/10 flex items-center justify-center shrink-0">
-                  <MapPin className="w-5 h-5 text-neo-purple" />
-                </div>
-                <div>
-                  <h3 className="font-bold mb-2">Permissão de Localização</h3>
-                  <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                    A NEOOH valoriza sua privacidade. Para que o Agente NEO possa oferecer um atendimento personalizado, informando sobre as telas e serviços mais próximos a você (como aeroportos e rodoviárias da sua região), gostaríamos de acessar sua localização e IP. Você permite o uso destes dados, de acordo com a LGPD?
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-3 justify-end mt-6">
-                <button
-                  onClick={handleDeclineLocation}
-                  className={`px-4 py-2 rounded-full text-sm font-bold transition-colors ${isDarkMode ? 'hover:bg-white/10 text-gray-300' : 'hover:bg-black/5 text-gray-600'}`}
-                >
-                  Recusar
-                </button>
-                <button
-                  onClick={handleAcceptLocation}
-                  className="px-4 py-2 rounded-full text-sm font-bold bg-neo-purple text-white hover:opacity-90 transition-opacity"
-                >
-                  Permitir
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Navbar */}
       <nav aria-label="Navegação Principal" className={`fixed top-0 w-full z-50 px-4 md:px-6 py-4 flex justify-between items-center transition-all ${isDarkMode ? 'glass-morphism' : 'bg-white/80 backdrop-blur-2xl border-b border-black/5'}`}>
         <a href="#contato" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
@@ -670,25 +578,15 @@ export default function App() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.2, duration: 0.6 }}
                 whileHover={{ y: -10 }}
-                className={`p-8 rounded-3xl border flex flex-col h-full transition-all relative ${isDarkMode ? 'glass-morphism border-white/10' : 'bg-gray-50 border-black/5 shadow-sm'}`}
+                className={`p-8 rounded-3xl border flex flex-col h-full transition-all ${isDarkMode ? 'glass-morphism border-white/10' : 'bg-gray-50 border-black/5 shadow-sm'}`}
               >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex gap-1" aria-label={`${item.stars} de 5 estrelas`}>
-                    {[...Array(5)].map((_, starIdx) => (
-                      <Zap 
-                        key={starIdx} 
-                        className={`w-4 h-4 ${starIdx < item.stars ? 'text-neo-pink fill-neo-pink' : (isDarkMode ? 'text-gray-600' : 'text-gray-300')}`} 
-                      />
-                    ))}
-                  </div>
-                  <button 
-                    onClick={() => handleShare(`Case de Sucesso: ${item.company}`, item.comment)}
-                    className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-black/5 text-gray-500 hover:text-black'}`}
-                    aria-label="Compartilhar case de sucesso"
-                    title="Compartilhar"
-                  >
-                    <Share2 className="w-4 h-4" />
-                  </button>
+                <div className="flex gap-1 mb-4" aria-label={`${item.stars} de 5 estrelas`}>
+                  {[...Array(5)].map((_, starIdx) => (
+                    <Zap 
+                      key={starIdx} 
+                      className={`w-4 h-4 ${starIdx < item.stars ? 'text-neo-pink fill-neo-pink' : (isDarkMode ? 'text-gray-600' : 'text-gray-300')}`} 
+                    />
+                  ))}
                 </div>
                 <blockquote className={`italic mb-8 flex-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                   "{item.comment}"
@@ -763,16 +661,13 @@ export default function App() {
             <h2 className={`text-4xl md:text-5xl font-black tracking-tighter mb-4 uppercase ${isDarkMode ? 'text-white' : 'text-black'}`}>ANUNCIE <span className="neo-text-gradient">AGORA</span></h2>
             <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Preencha os dados abaixo e nossa equipe entrará em contato.</p>
           </div>
-          <form aria-label="Formulário de Contato" className={`space-y-6 p-6 md:p-10 rounded-3xl border shadow-2xl transition-all ${isDarkMode ? 'bg-black/40 border-white/10' : 'bg-white border-black/5'}`} onSubmit={handleWhatsAppSubmit}>
+          <form aria-label="Formulário de Contato" className={`space-y-6 p-6 md:p-10 rounded-3xl border shadow-2xl transition-all ${isDarkMode ? 'bg-black/40 border-white/10' : 'bg-white border-black/5'}`} onSubmit={(e) => e.preventDefault()}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label htmlFor="nome" className={`text-xs font-bold uppercase tracking-widest ml-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Nome</label>
                 <input 
                   id="nome"
                   type="text" 
-                  value={formData.nome}
-                  onChange={(e) => setFormData({...formData, nome: e.target.value})}
-                  required
                   placeholder="Seu nome completo" 
                   className={`w-full border rounded-2xl px-6 py-4 focus:outline-none focus:border-neo-lilac transition-colors ${isDarkMode ? 'bg-zinc-900/50 border-white/10 text-white' : 'bg-gray-50 border-black/10 text-black'}`}
                 />
@@ -782,9 +677,6 @@ export default function App() {
                 <input 
                   id="email"
                   type="email" 
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  required
                   placeholder="seu@email.com" 
                   className={`w-full border rounded-2xl px-6 py-4 focus:outline-none focus:border-neo-lilac transition-colors ${isDarkMode ? 'bg-zinc-900/50 border-white/10 text-white' : 'bg-gray-50 border-black/10 text-black'}`}
                 />
@@ -795,9 +687,6 @@ export default function App() {
               <input 
                 id="whatsapp"
                 type="tel" 
-                value={formData.whatsapp}
-                onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
-                required
                 placeholder="(00) 00000-0000" 
                 className={`w-full border rounded-2xl px-6 py-4 focus:outline-none focus:border-neo-lilac transition-colors ${isDarkMode ? 'bg-zinc-900/50 border-white/10 text-white' : 'bg-gray-50 border-black/10 text-black'}`}
               />
@@ -958,7 +847,7 @@ export default function App() {
       </motion.footer>
 
       {/* Floating Actions */}
-      <div className="fixed bottom-5 right-24 z-[100] flex flex-col gap-4 items-end">
+      <div className="fixed bottom-8 right-8 z-[100] flex flex-col gap-4 items-end">
         <AnimatePresence>
           {showScrollTop && (
             <motion.button
@@ -970,10 +859,130 @@ export default function App() {
               title="Voltar ao topo"
               aria-label="Voltar ao topo"
             >
-              <ChevronUp className={`w-6 h-6 group-hover:scale-110 transition-transform ${isDarkMode ? 'text-white' : 'text-black group-hover:text-white'}`} />
+              <ChevronUp className={`w-6 h-6 group-hover:scale-110 transition-transform ${isDarkMode ? 'text-white' : 'text-black'}`} />
             </motion.button>
           )}
         </AnimatePresence>
+
+        <AnimatePresence>
+          {isChatOpen && (
+            <motion.div 
+              id="chat-panel"
+              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: 20 }}
+              className={`mb-4 w-[calc(100vw-32px)] sm:w-[400px] h-[500px] rounded-3xl overflow-hidden flex flex-col shadow-2xl border transition-all ${isDarkMode ? 'chat-dark-bg border-white/10' : 'bg-white border-black/10'}`}
+            >
+              {/* Chat Header */}
+              <div className="p-6 neo-gradient flex justify-between items-center shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-full bg-black/20 flex items-center justify-center overflow-hidden border border-white/10 ${isLoading ? 'animate-pulse ring-2 ring-white/20' : ''}`}>
+                    <GeminiIcon className={`w-8 h-8 text-white ${isLoading ? 'animate-spin-slow' : ''}`} />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-lg leading-none text-white">NEO</h3>
+                    <span className="text-xs text-white/70">{isLoading ? 'Processando...' : 'Powered by NEOOH - TERRA AI'}</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsChatOpen(false)}
+                  className="p-2 hover:bg-black/20 rounded-full transition-colors text-white"
+                  aria-label="Fechar chat"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Chat Messages */}
+              <div 
+                className={`flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide ${isDarkMode ? 'bg-black/20' : 'bg-gray-50'}`}
+                aria-live="polite"
+              >
+                {messages.map((msg, i) => (
+                  <motion.div 
+                    key={i} 
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`max-w-[80%] p-4 rounded-2xl text-sm shadow-sm ${
+                      msg.role === 'user' 
+                        ? 'bg-neo-purple text-white rounded-tr-none' 
+                        : (isDarkMode ? 'bg-zinc-900/80 text-gray-200 rounded-tl-none border border-white/5' : 'bg-white text-gray-800 rounded-tl-none border border-black/5')
+                    }`}>
+                      {msg.text}
+                    </div>
+                  </motion.div>
+                ))}
+                {isLoading && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex justify-start"
+                  >
+                    <div className="flex flex-col gap-1">
+                      <div className={`p-4 rounded-2xl rounded-tl-none border flex gap-1.5 items-center ${isDarkMode ? 'bg-zinc-900/80 border-white/5' : 'bg-white border-black/5'}`}>
+                        <div className="w-2 h-2 bg-neo-lilac rounded-full animate-bounce [animation-duration:0.8s]" />
+                        <div className="w-2 h-2 bg-neo-pink rounded-full animate-bounce [animation-duration:0.8s] [animation-delay:0.2s]" />
+                        <div className="w-2 h-2 bg-neo-purple rounded-full animate-bounce [animation-duration:0.8s] [animation-delay:0.4s]" />
+                      </div>
+                      <span className="text-[10px] text-neo-lilac font-bold uppercase tracking-widest ml-1 animate-pulse">NEO está pensando...</span>
+                    </div>
+                  </motion.div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Chat Input */}
+              <div className={`p-4 border-t flex flex-col gap-2 ${isDarkMode ? 'border-white/5 bg-black/40' : 'border-black/5 bg-white'}`}>
+                {!user && (
+                  <button 
+                    onClick={signInWithGoogle}
+                    className={`w-full py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all mb-2 ${isDarkMode ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-black'}`}
+                  >
+                    Faça login para conversar
+                  </button>
+                )}
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={input}
+                    disabled={!user}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                    placeholder={user ? "Pergunte ao NEO..." : "Faça login primeiro"}
+                    className={`flex-1 border rounded-full px-6 py-3 text-sm focus:outline-none focus:border-neo-lilac transition-colors disabled:opacity-50 ${isDarkMode ? 'bg-zinc-900/50 border-white/5 text-white placeholder:text-gray-600' : 'bg-gray-50 border-black/10 text-black placeholder:text-gray-400'}`}
+                    aria-label="Mensagem para o chat"
+                  />
+                  <button 
+                    onClick={handleSendMessage}
+                    disabled={isLoading || !user}
+                    className={`w-12 h-12 neo-gradient rounded-full flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50 shadow-lg text-white ${isLoading ? 'scale-90 opacity-50' : 'active:scale-95'}`}
+                    aria-label="Enviar mensagem"
+                  >
+                    {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <Send className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <button 
+          onClick={() => setIsChatOpen(!isChatOpen)}
+          className="w-16 h-16 neo-gradient rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform relative group"
+          aria-expanded={isChatOpen}
+          aria-controls="chat-panel"
+          aria-label={isChatOpen ? "Fechar chat" : "Abrir chat com NEO"}
+        >
+          <div className="absolute inset-0 rounded-full bg-neo-lilac animate-ping opacity-20 group-hover:opacity-40" />
+          <GeminiIcon className="w-10 h-10 text-white relative z-10" />
+        </button>
       </div>
     </div>
   );
