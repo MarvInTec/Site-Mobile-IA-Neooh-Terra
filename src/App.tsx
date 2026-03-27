@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import QRCode from 'react-qr-code';
 import { LGPDConsent } from './components/LGPDConsent';
 import { VoiceChat } from './components/VoiceChat';
+import { trackPageView, trackSectionView, trackEvent } from './lib/analytics';
 import { getNeoResponse } from './services/geminiService';
 import { auth, db, signInWithGoogle, logout, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, where } from './firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -31,6 +32,44 @@ export default function App() {
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef(messages);
+
+  // Google Analytics Page View
+  useEffect(() => {
+    trackPageView(window.location.pathname + window.location.search);
+  }, []);
+
+  // Google Analytics Section Tracking
+  useEffect(() => {
+    const sections = ['solucoes', 'tecnologia', 'showroom', 'cases', 'contato'];
+    const observedSections = new Set<string>();
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const sectionId = entry.target.id;
+            if (!observedSections.has(sectionId)) {
+              trackSectionView(sectionId);
+              observedSections.add(sectionId);
+            }
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+
+    sections.forEach((id) => {
+      const element = document.getElementById(id);
+      if (element) observer.observe(element);
+    });
+
+    return () => {
+      sections.forEach((id) => {
+        const element = document.getElementById(id);
+        if (element) observer.unobserve(element);
+      });
+    };
+  }, []);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -229,11 +268,11 @@ export default function App() {
 
         {/* Desktop Menu - Now visible on Tablet (md) */}
         <div className={`hidden md:flex gap-8 text-sm font-medium uppercase tracking-widest ${isDarkMode ? 'text-white/70' : 'text-black/70'}`}>
-          <a href="#solucoes" className="hover:text-neo-lilac transition-colors">Soluções</a>
-          <a href="#tecnologia" className="hover:text-neo-lilac transition-colors">Tecnologia</a>
-          <a href="#showroom" className="hover:text-neo-lilac transition-colors">Showroom</a>
-          <a href="#cases" className="hover:text-neo-lilac transition-colors">Cases</a>
-          <a href="#contato" className="hover:text-neo-lilac transition-colors">Contato</a>
+          <a href="#solucoes" onClick={() => trackEvent('nav_click', 'engagement', 'solucoes')} className="hover:text-neo-lilac transition-colors">Soluções</a>
+          <a href="#tecnologia" onClick={() => trackEvent('nav_click', 'engagement', 'tecnologia')} className="hover:text-neo-lilac transition-colors">Tecnologia</a>
+          <a href="#showroom" onClick={() => trackEvent('nav_click', 'engagement', 'showroom')} className="hover:text-neo-lilac transition-colors">Showroom</a>
+          <a href="#cases" onClick={() => trackEvent('nav_click', 'engagement', 'cases')} className="hover:text-neo-lilac transition-colors">Cases</a>
+          <a href="#contato" onClick={() => trackEvent('nav_click', 'engagement', 'contato')} className="hover:text-neo-lilac transition-colors">Contato</a>
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
@@ -261,7 +300,7 @@ export default function App() {
             )}
           </div>
           
-          <a href="#anuncie" className={`px-4 md:px-6 py-2 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-tighter transition-all ${isDarkMode ? 'bg-white text-black hover:bg-neo-pink hover:text-white' : 'bg-black text-white hover:bg-neo-pink'}`}>
+          <a href="#anuncie" onClick={() => trackEvent('anuncie_click', 'conversion', 'navbar')} className={`px-4 md:px-6 py-2 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-tighter transition-all ${isDarkMode ? 'bg-white text-black hover:bg-neo-pink hover:text-white' : 'bg-black text-white hover:bg-neo-pink'}`}>
             Anuncie Agora
           </a>
 
@@ -303,16 +342,17 @@ export default function App() {
               
               <nav aria-label="Menu Mobile" className={`flex flex-col gap-8 text-2xl font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>
                 {[
-                  { label: 'Soluções', href: '#solucoes' },
-                  { label: 'Tecnologia', href: '#tecnologia' },
-                  { label: 'Showroom', href: '#showroom' },
-                  { label: 'Cases', href: '#cases' },
-                  { label: 'Contato', href: '#contato' }
+                  { label: 'Soluções', href: '#solucoes', id: 'solucoes' },
+                  { label: 'Tecnologia', href: '#tecnologia', id: 'tecnologia' },
+                  { label: 'Showroom', href: '#showroom', id: 'showroom' },
+                  { label: 'Cases', href: '#cases', id: 'cases' },
+                  { label: 'Contato', href: '#contato', id: 'contato' }
                 ].map((link, i) => (
                   <motion.a
                     key={i}
                     href={link.href}
                     onClick={() => {
+                      trackEvent('nav_click_mobile', 'engagement', link.id);
                       // Aguarda um pequeno instante para que a animação de scroll inicie suavemente antes de fechar
                       setTimeout(() => {
                         setIsMobileMenuOpen(false);
@@ -407,6 +447,9 @@ export default function App() {
           >
             <a href="#sobre-nos" className="neo-gradient hover:opacity-90 text-white px-10 py-4 rounded-full font-bold text-lg transition-all flex items-center justify-center gap-2">
               CONHEÇA A EQUIPE <ChevronRight className="w-5 h-5" />
+            </a>
+            <a href="#anuncie" onClick={() => trackEvent('anuncie_click', 'conversion', 'hero')} className={`px-10 py-4 rounded-full font-bold text-lg transition-all flex items-center justify-center gap-2 ${isDarkMode ? 'bg-white text-black hover:bg-neo-pink hover:text-white' : 'bg-black text-white hover:bg-neo-pink'}`}>
+              ANUNCIE AGORA <Zap className="w-5 h-5" />
             </a>
           </motion.div>
         </motion.div>
@@ -699,7 +742,16 @@ export default function App() {
             <h2 className={`text-4xl md:text-5xl font-black tracking-tighter mb-4 uppercase ${isDarkMode ? 'text-white' : 'text-black'}`}>ANUNCIE <span className="neo-text-gradient">AGORA</span></h2>
             <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Preencha os dados abaixo e nossa equipe entrará em contato.</p>
           </div>
-          <form aria-label="Formulário de Contato" className={`space-y-6 p-6 md:p-10 rounded-3xl border shadow-2xl transition-all ${isDarkMode ? 'bg-black/40 border-white/10' : 'bg-white border-black/5'}`} onSubmit={(e) => e.preventDefault()}>
+          <form 
+            aria-label="Formulário de Contato" 
+            className={`space-y-6 p-6 md:p-10 rounded-3xl border shadow-2xl transition-all ${isDarkMode ? 'bg-black/40 border-white/10' : 'bg-white border-black/5'}`} 
+            onSubmit={(e) => {
+              e.preventDefault();
+              trackEvent('lead_form_submit', 'conversion', 'contact_section');
+              // Here you would normally handle the form submission
+              alert('Obrigado! Entraremos em contato em breve.');
+            }}
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label htmlFor="nome" className={`text-xs font-bold uppercase tracking-widest ml-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Nome</label>
